@@ -1,0 +1,83 @@
+#######################################
+# Syntax Coloring Map For TabahiConsole
+
+#######################################
+# Datatypes (KEYWORD1)
+
+TTC	KEYWORD1
+TabahiConsole	KEYWORD2
+TabahiWeather	KEYWORD2
+Console	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+
+fetchWeather	KEYWORD2
+logln	KEYWORD2
+log	KEYWORD2
+initialize	KEYWORD2
+cryptSetKey	KEYWORD2
+newDataRow	KEYWORD2
+DataClear	KEYWORD2
+printVariables	KEYWORD2
+isValid	KEYWORD2
+isValidType	KEYWORD2
+Identify	KEYWORD2
+runSync	KEYWORD2
+CommitLogs	KEYWORD2
+CommitData	KEYWORD2
+set	KEYWORD2
+get	KEYWORD2
+set_hex	KEYWORD2
+get_hex	KEYWORD2
+get_float	KEYWORD2
+set_float	KEYWORD2
+set_long	KEYWORD2
+set_ulong	KEYWORD2
+set_time	KEYWORD2
+set_geo	KEYWORD2
+get_long	KEYWORD2
+get_int	KEYWORD2
+set_int	KEYWORD2
+get_bool	KEYWORD2
+set_bool	KEYWORD2
+get_String	KEYWORD2
+set_String	KEYWORD2
+get_ulong	KEYWORD2
+get_time	KEYWORD2
+get_geo_lat	KEYWORD2
+get_geo_lon	KEYWORD2
+ClearAllVariables	KEYWORD2
+Clear	KEYWORD2
+push	KEYWORD2
+push_float	KEYWORD2
+push_long	KEYWORD2
+push_ulong	KEYWORD2
+push_int	KEYWORD2
+push_String	KEYWORD2
+SendJSON	KEYWORD2
+realtime	KEYWORD2
+readMessage	KEYWORD2
+sendMessage	KEYWORD2
+
+
+#######################################
+# Instances (KEYWORD2)
+
+#######################################
+# Constants (LITERAL1)
+
+NT	LITERAL1
+inbox	LITERAL1
+RUN_MINUTES	LITERAL1
+node_token_valid	LITERAL1
+LOGS_EN	LITERAL1
+WEATHER_HOURS_MAX	LITERAL1
+INVALID_VALUE	LITERAL1
+forecast	LITERAL1
+temp	LITERAL1
+humid	LITERAL1
+perc	LITERAL1
+snow	LITERAL1
+rain	LITERAL1
+fog	LITERAL1
