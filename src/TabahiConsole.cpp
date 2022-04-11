@@ -3209,6 +3209,203 @@ bool TTC::executeOTAupdate(String bin_link)
 #endif
 //weather forecast functions:
 
+
+int TTC::fetchSunrise(TCPClientObj *TCPclient, String geo_lat, String geo_lon)
+{
+  if (!node_token_valid)
+    return ERR_NO_NODE_TOKEN;
+
+#if TTC_INTERNAL_LOGS
+  log(F("[sunr] Connecting\t"));
+#endif
+  //WiFiClient TCPclient;
+  if (!TCPclient->connect(_TTC_server, TT_TCP_port))
+  {
+    TCP_fails++;
+#if TTC_INTERNAL_LOGS
+    log(F("Failed\t"));
+    logln(TCP_fails);
+#endif
+    if (TCP_fails >= 10)
+      return ERR_FAILED_CONN_10x;
+    return ERR_FAILED_CONN;
+  }
+  else
+  {
+    TCP_fails = 0;
+    logln(F("OK"));
+
+    unsigned long tcp_start_time = millis();
+
+    String custom_request = "{\"sunrise\":{\"lat\":";
+    custom_request += geo_lat;
+    custom_request += ",\"lon\":";
+    custom_request += geo_lon;
+    custom_request += ",\"days\":1}}";
+    //custom_request += String(forecast_days);
+    //custom_request += "}}";
+
+    //Serial.println(custom_request);
+
+    Start_AUTH(TCPclient);
+
+    //Now send the rest of the request
+    // use 'TCP_send_enc' to send Strings. Use TCPclient.write(enc_char(' ')) to send single characters
+    TCP_send_enc(TCPclient, custom_request);
+
+    TCPclient->write(enc_char('\n')); //"write" only sends single chars, cannot use print
+    TCPclient->write(enc_char('\n')); //must send double new line as a packet end indicator
+    //Serial.println(F("Conn req sent"));
+
+    weather_parsing_reset();
+    bool dec_started = 0;
+    bool ack_ok = 0;
+    bool error = 0;
+    char last_in = '\0';
+
+    while ((millis() - tcp_start_time) < TTC_connection_timeout) //timeout
+    {
+      if (TCPclient->available())
+      {
+        char ch = static_cast<char>(TCPclient->read());
+        if (!dec_started)
+        {
+          if ((last_in == '\b') && (ch == '\r')) //decryption start indication
+          {
+            dec_start();
+            dec_started = 1;
+            //Serial.print("\n[D]\n");
+          }
+          last_in = ch;
+        }
+        else
+        {
+          char dec_c = dec_char(ch);
+
+          if ((last_in == '\n') && (dec_c == '\b')) //stream end indication
+          {
+            ack_ok = 1;
+            //Serial.println(F("Conn end ack"));
+#if TTC_INTERNAL_LOGS
+            logln(F("[sunr] ack"));
+#endif
+            break;
+          }
+          else if ((dec_c == '*') && (last_in == '\n')) // \n*ERROR
+            error = 1;
+          else
+          {
+            parse_sunrise(dec_c);
+            if(error) log(dec_c);
+            //Serial.print(dec_c);
+          }
+          last_in = dec_c;
+        }
+      }
+    }
+    TCPclient->stop();
+    TCPclient->flush();
+    //Serial.println(F("Conn stop."));
+
+    if (!ack_ok)
+    {
+		
+#if TTC_INTERNAL_LOGS
+		logln(F("[sunr] ack failed"));
+#endif
+	  RTC_synced = 0;
+	}
+
+    return w_count;
+  }
+
+  return ERR_FAILED_CONN;
+}
+
+void TTC::weather_parsing_reset(void) //reset weather parser
+{
+  w_flag = 0;
+  w_count = 0;
+  w_accum = "";
+}
+
+
+
+
+void TTC::parse_sunrise(char c)
+{
+  if (w_flag == 0)
+  {
+    if (c == '{')
+      w_flag = 1;
+  }
+  else if (w_flag == 1)
+  {
+    if (c == '[')
+    {
+      w_flag = 2;
+      w_comma = 0;
+      w_accum = "";
+      sunrise_hour = 255;	//sunrise hour
+      sunrise_minutes = 255;	//sunrise minutes
+      noon_hour = 255;	//noon
+      noon_minutes = 255;
+      sunset_hour = 255;	//sunset
+      sunset_minutes = 255;
+      noon_angle = -1;
+      moon_phase = -1;
+    }
+    else if (c == '}')
+      w_flag = 0;
+  }
+  else if (w_flag == 2)
+  {
+    if ((c == ',') || (c == ']'))
+    {
+      if (w_accum.length() > 0)
+      {
+        if (w_comma == 1)
+          sunrise_hour = w_accum.toInt();
+        else if (w_comma == 2)
+          sunrise_minutes = w_accum.toInt();
+        else if (w_comma == 3)
+          noon_hour = w_accum.toInt();
+        else if (w_comma == 4)
+          noon_minutes = w_accum.toInt();
+        else if (w_comma == 5)
+          sunset_hour = w_accum.toInt();
+        else if (w_comma == 6)
+          sunset_minutes = w_accum.toInt();
+
+        else if (w_comma == 7)
+          noon_angle = w_accum.toFloat();
+        else if (w_comma == 8)
+          moon_phase = w_accum.toFloat();
+      }
+      w_accum = "";
+
+      if (c == ']')
+      {
+        if (sunrise_hour != 255)
+        {
+          w_count = 1;
+        }
+        w_flag = 1;
+      }
+      else
+        w_comma++;
+    }
+    else
+      w_accum += c;
+  }
+
+  /*
+    {[0,6,26,12,10,17,56,34.497128794,23.69387964]}
+//day,sr_h,sr_m,sn_h,sn_m,ss_h,ss_m,se,mp
+  */
+}
+
+
 #if defined(WEATHER_HOURS_MAX) && (WEATHER_HOURS_MAX > 0)
 
 int TTC::fetchWeather(TCPClientObj *TCPclient, String geo_lat, String geo_lon, int forecast_hours)
@@ -3248,31 +3445,7 @@ int TTC::fetchWeather(TCPClientObj *TCPclient, String geo_lat, String geo_lon, i
 
     //Serial.println(custom_request);
 
-    // first authenticate using this format:
-    //   AUTH=_USER_TOK;\b\rNT=NODE_TOKEN;
-    //   Everything after \b\r should be sent with encryption by enc_char()
-    //   If there is no node token assigned to this node yet, then use Identifier to get the node token by MAC address.
-	
-	/*
-    TCPclient->printf("AUTH=%s;\b\r", _USER_TOK);
-    //encryption starts with \b\r, everything after this should be encrypted by USER_SECRET
-    enc_start();
-    delay(10); //important pause
-
-    TCP_send_enc(TCPclient, String(tcp_start_time));
-    TCPclient->write(enc_char('_'));
-    TCP_send_enc(TCPclient, String(RTC_synced > 0 ? realtime() : 0));
-    TCPclient->write(enc_char('&'));
-    TCPclient->write(enc_char('\b'));
-
-    //first thing to send right after encryption starts is the NT
-    //TCP_send_enc(TCPclient, "NT=");
-    for (uint8_t i = 0; i < TOKEN_LENGTH; i++)
-      TCPclient->write(enc_char(NT[i]));
-    TCPclient->write(enc_char(';'));
-    TCPclient->write(enc_char('\n')); //new line, not necessary
-	*/
-	Start_AUTH(TCPclient);
+    Start_AUTH(TCPclient);
 
     //Now send the rest of the request
     // use 'TCP_send_enc' to send Strings. Use TCPclient.write(enc_char(' ')) to send single characters
@@ -3354,18 +3527,13 @@ void TTC::weather_init(void)
     forecast[i].temp = INVALID_VALUE;
     forecast[i].humid = INVALID_VALUE;
     forecast[i].perc = INVALID_VALUE;
-    forecast[i].rain = INVALID_VALUE;
-    forecast[i].snow = INVALID_VALUE;
-    forecast[i].fog = INVALID_VALUE;
+    //forecast[i].rain = INVALID_VALUE;
+    //forecast[i].snow = INVALID_VALUE;
+    //forecast[i].fog = INVALID_VALUE;
+    forecast[i].symbol = "";
   }
 }
 
-void TTC::weather_parsing_reset(void) //reset weather parser
-{
-  w_flag = 0;
-  w_count = 0;
-  w_accum = "";
-}
 
 void TTC::parse_weather(char c)
 {
@@ -3385,9 +3553,10 @@ void TTC::parse_weather(char c)
       p_temp = INVALID_VALUE;
       p_humd = INVALID_VALUE;
       p_perp = INVALID_VALUE;
-      p_snow = INVALID_VALUE;
-      p_rain = INVALID_VALUE;
-      p_fog = INVALID_VALUE;
+      w_symbol = "";
+      //p_snow = INVALID_VALUE;
+      //p_rain = INVALID_VALUE;
+      //p_fog = INVALID_VALUE;
     }
     else if (c == '}')
       w_flag = 0;
@@ -3408,14 +3577,15 @@ void TTC::parse_weather(char c)
           p_perp = w_accum.toFloat();
         else if (w_comma == 4)
         {
-          match_weather_severity();
+          w_symbol = w_accum;
+          //match_weather_severity();
         }
       }
       w_accum = "";
 
       if (c == ']')
       {
-        if ((p_hr >= 0) && (p_hr < WEATHER_HOURS_MAX) && (p_hr >= 0) && (p_snow != INVALID_VALUE) && (p_hr != INVALID_VALUE) && (p_temp != INVALID_VALUE) && (p_humd != INVALID_VALUE) && (p_perp != INVALID_VALUE))
+        if ((p_hr >= 0) && (p_hr < WEATHER_HOURS_MAX) && (p_hr >= 0) && (p_hr != INVALID_VALUE) && (p_temp != INVALID_VALUE) && (p_humd != INVALID_VALUE) && (p_perp != INVALID_VALUE))
         {
           forecast[p_hr].temp = p_temp;
           forecast[p_hr].humid = p_humd;
@@ -3423,9 +3593,10 @@ void TTC::parse_weather(char c)
             forecast[p_hr].perc = (p_perp * 100);
           else
             forecast[p_hr].perc = 0;
-          forecast[p_hr].snow = p_snow;
-          forecast[p_hr].rain = p_rain;
-          forecast[p_hr].fog = p_fog;
+          forecast[p_hr].symbol = w_symbol;
+          //forecast[p_hr].snow = p_snow;
+          //forecast[p_hr].rain = p_rain;
+          //forecast[p_hr].fog = p_fog;
 
           w_count++;
         }
@@ -3445,6 +3616,7 @@ void TTC::parse_weather(char c)
   */
 }
 
+/*
 void TTC::match_weather_severity(void)
 {
   //You can add more symbols from this list:
@@ -3498,7 +3670,7 @@ void TTC::match_weather_severity(void)
 
   for (uint8_t s = 0; s < TOTAL_SYMBOLS; s++)
   {
-    if (w_accum.indexOf(weather_severity[s].symbol) >= 0)
+    if (w_symbol.indexOf(weather_severity[s].symbol) >= 0)
     {
       p_snow = weather_severity[s].snow_index;
       p_rain = weather_severity[s].rain_index;
@@ -3507,5 +3679,6 @@ void TTC::match_weather_severity(void)
     }
   }
 }
+*/
 
 #endif

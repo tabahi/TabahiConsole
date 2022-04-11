@@ -42,23 +42,24 @@
 
 //weather classes:
 #if defined(WEATHER_HOURS_MAX) && (WEATHER_HOURS_MAX > 0)
-
+/*
 struct SymbolClass
 {
 	const char *symbol;
 	uint8_t snow_index;
 	uint8_t rain_index;
 	uint8_t fog_index;
-};
+};*/
 
 struct ForecastClass
 {
 	float temp;
 	float humid;
 	uint8_t perc; //precipitation 0 to 1 value
-	uint8_t snow; //snow symbols -> probability
-	uint8_t rain; //rain symbols -> probability
-	uint8_t fog;  //fog symbols -> probability
+	String symbol;
+	//uint8_t snow; //snow symbols -> probability
+	//uint8_t rain; //rain symbols -> probability
+	//uint8_t fog;  //fog symbols -> probability
 };
 
 #define INVALID_VALUE -127
@@ -199,6 +200,17 @@ public:
 	bool executeOTAupdate(String bin_link);
 	String getHeaderValue(String header, String headerName);
 	#endif
+	
+	int fetchSunrise(TCPClientObj *TCPclient, String geo_lat, String geo_lon);
+
+	uint8_t sunrise_hour = 255;	//sunrise hour
+	uint8_t sunrise_minutes = 255;	//sunrise minutes
+	uint8_t noon_hour = 255;	//noon
+	uint8_t noon_minutes = 255;
+	uint8_t sunset_hour = 255;	//sunset
+	uint8_t sunset_minutes = 0;
+	float noon_angle = -1;
+	float moon_phase = -1;
 
 #if defined(WEATHER_HOURS_MAX) && (WEATHER_HOURS_MAX > 0)
 	void weather_init(void);
@@ -206,6 +218,7 @@ public:
 
 	struct ForecastClass forecast[WEATHER_HOURS_MAX];
 #endif
+
 
 private:
 	UCPClientObj Udp;
@@ -292,21 +305,28 @@ private:
 	byte *sec_key = NULL;
 	const uint8_t cip[8] = {211, 146, 235, 31, 245, 93, 129, 23}; //internal cipher pin, <255
 
-#if defined(WEATHER_HOURS_MAX) && (WEATHER_HOURS_MAX > 0)
-	void weather_parsing_reset(void);
-	void parse_weather(char c);
-	void match_weather_severity(void);
+	
+	
+	void parse_sunrise(char c);
 
 	uint8_t w_flag = 0;
 	uint8_t w_count = 0;
 	uint8_t w_comma = 0;
 	String w_accum = "";
+
+	void weather_parsing_reset(void);
+
+#if defined(WEATHER_HOURS_MAX) && (WEATHER_HOURS_MAX > 0)
+	void parse_weather(char c);
+	void match_weather_severity(void);
+
 	int p_hr = INVALID_VALUE;
 	float p_temp = INVALID_VALUE;
 	float p_humd = INVALID_VALUE;
 	float p_perp = INVALID_VALUE;	//percipitation
-	int16_t p_snow = INVALID_VALUE; //snow symbols
-	int16_t p_rain = INVALID_VALUE; //rain symbols
-	int16_t p_fog = INVALID_VALUE;	//fog symbols
+	String w_symbol = "";
+	//int16_t p_snow = INVALID_VALUE; //snow symbols
+	//int16_t p_rain = INVALID_VALUE; //rain symbols
+	//int16_t p_fog = INVALID_VALUE;	//fog symbols
 #endif
 };
