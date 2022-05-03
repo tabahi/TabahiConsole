@@ -2,12 +2,13 @@
 #include <ESPWifiConfig.h>
 #include <TabahiConsole.h>
 
-const char* ssid     = "SSE Broadband D1CC3D";
-const char* password = "7JnaAdaGNFsErnxY";
+const char* ssid     = "WiFi Name";
+const char* password = "WiFi Pass";
 
 #define TTC_server "api.tabahi.tech" //api.tabahi.tech
-#define USER_TOKEN "6225868df6412032c74a3698"
-#define USER_SECRET "E4aGDqvSS6pbNuIoInnBEh"
+#define USER_TOKEN "6223338df64144aac74a3622" //copy from account
+#define USER_SECRET "Deu9DqvSS6pbNuIoI43aCh" //copy from account
+
 #define DEBUG_TTC 1 //set to 1 to print verbose info on Serial
 
 TTC Console(TTC_server, 2096, 44561, USER_TOKEN, USER_SECRET, DEBUG_TTC);

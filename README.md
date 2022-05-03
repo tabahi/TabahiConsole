@@ -19,9 +19,6 @@ Start by initializing the class
 `TTC Console(TTC_server, TTC_port, UDP_port, USER_TOKEN, USER_SECRET, DEBUG_TTC);`
 then call the following during `setup()`:
 
-#### `void initialize(void)`
-
-#### `void initialize(const char *TTC_server, int TTC_port, int UDP_port, const char *USER_TOKEN, const char *USER_SECRET, bool enable_debug)`
 
 ```cpp
 #include <TabahiConsole.h>
@@ -102,18 +99,31 @@ Syncing is performed over a secure TCP protocol. It first sends the values from 
 
 
 ```cpp
-  WiFiClient TCPclient;
-  int n_vars = Console.runSync(&TCPclient);
+WiFiClient TCPclient;
+int n_vars = Console.runSync(&TCPclient); //returns >=0 number of variables if no error
 
-  //returns the number of synced variables. Error if it's negative.
 
-  /* ERRORS:
-  ERR_FAILED_CONN -1      //Connection failed to the server
-  ERR_FAILED_CONN_10x -10 //10 times consistent failure. Probably no internet connection.
-  ERR_NO_NODE_TOKEN -2    //NT isn't identified, call Console.Identify(&TCPclient, mac_address); for a new NT.
-  ERR_ACK_FAILED -3       //usually due to wrong account security details. UDP Console.log() might still work because that's not encrypted.
-  ERR_DATA_PARSE -4       //usually due to wrong TTC or JSON syntax, try removing quotations.
-  */
+if (n_vars >= 0) //check if variables sync was ok
+{
+  Console.logln("Sync: OK");
+  Console.printVariables(); //print all the vairables on Serial
+}
+else
+  Serial.printf("Sync failed, status: %d \n", n_vars);
+
+
+//parse the synced variables
+unsigned long heartbeat = Console.get_ulong("heartbeat");
+
+//check if a there is a bool variable 'example'
+if (Console.isValidType("example", 'b'))
+  bool example = Console.get_bool("example");
+
+//setting a variable to a new value
+int new_var = 123;
+Console.set_int("new_var", new_var);
+//this new value will show on the console after the next sync cycle
+
 ```
 
 In the case of a conflict, the value from the console is preferred. But if the value changes on both sides, on the console AND on the device between two syncs, then the value from the device is preferred unless the variable is set to constant. There is a 2 minutes grace period for the console to yield when the device changes to a new value while the user has recently updated a new value in console. In other words, the new value that the user has set on the console will be discarded after 2 minutes because the device keeps on updating to a newer value. To avoid this, don't update the value on the console if the device is programmed to always set to a newer value between two syncs.
@@ -218,6 +228,25 @@ int sendMsgStatus = Console.sendMessage(&TCPclient, mac_address, "yo, sup?");
 Serial.print("Msg sent:\t"); Serial.println(sendMsgStatus); //1 = sent
 ```
 
+
+## UDP Monitor
+
+UDP monitor uses a simpler, faster, protocol without any encryption to deliver debugging or informational logs to the console. The mechanism for UDP only requires the correct `USER_TOKEN` to work, therefore can be used to debug other more sophisticated functionalities in case of failure.
+
+```cpp
+//print some logs on UDP monitor:
+Console.log("UTC time: "); //will show on UDP monitor on console.tabahi.tech
+Console.logln(Console.realtime());
+Console.logln("This is an information");
+Console.CommitLogs(mac_address.c_str()); //send all the monitor logs to server, using mac address as the identifier
+//must call CommitLogs() after log() to send logs to the server.
+```
+
+The identifier for UDP monitor can be anything but it helps to keep devices separate from each other by using a unique hardware identifier such as MAC address. `log()` and `logln()` functions store the data in a temporary buffer which is sent to the console on `CommitLogs()`.
+
+Note: Avoid sending critical information such as `USER_TOKEN` over the UDP Monitor because it's not encrypted. Whereas, all other features such as `runSync, CommitData and sendMessage` are encrypted for increased security.
+
+
 ## Weather
 
 You can get the weather forecast and sun timing using the Latitude and Longitude for a location. The API uses the data provided by met.no, which provide data for local times around the globe.
@@ -225,13 +254,14 @@ You can get the weather forecast and sun timing using the Latitude and Longitude
 
 ```cpp
 
-void checkWeatherForecast(int forecast_hours)
+void checkWeatherForecast()
 {
   //Should define at top of SettingsTTC.h :
   //#define WEATHER_HOURS_MAX 12
   //Then pass parameters as:
   String geo_lat = "60.362";
   String geo_lon = "5.013";
+  int forecast_hours = 12;
 
   WiFiClient TCPclient;
   uint8_t hours_reported = Console.fetchWeather(&TCPclient, geo_lat, geo_lon, forecast_hours);
@@ -292,7 +322,40 @@ void checkSunrise()
 
 
 ## OTA Update
-See examples
+
+A compiled binary `.bin` can be uploaded on the console for each device with a new version name for the device to check if their version is different therefore an update should be executed. In the following example, first `fetchUpdateURL` is used to get the link of the binary which will include the version name (if update available) in it. If the link doesn't include the version name of the currently running binary then the update is started using the new binary link with `executeOTAupdate`.
+
+```cpp
+#define myVersion "version1" //version name for this binary
+
+void try_update()
+{
+  WiFiClient TCPclient;
+  String latest_bin_link = Console.fetchUpdateURL(&TCPclient, TTC_server, "");
+  //update server can be different (should be HTTP), the last argument is for identifier if NODE_TOKEN is not known
+
+  if (latest_bin_link == "0") Console.logln("No update");
+  else if (latest_bin_link == "ERROR") Console.logln(latest_bin_link);
+  else if (latest_bin_link.length() > 0)
+  {
+    if (latest_bin_link.indexOf(myVersion) == -1)  //URL doesn't contains the current version name
+    {
+      Console.log("New version: ");
+      Console.logln(latest_bin_link);
+      Console.logln("Updating");
+      Console.CommitLogs(mac_id.c_str());
+
+      if (!Console.executeOTAupdate(latest_bin_link))
+        Console.logln("Update Failed");
+    }
+    else Console.logln("Latest version");
+  }
+}
+```
+See example `OTAupdate.ino` for updating with a safe mode in case the updated version keeps on restarting.
+
+
+
 
 ## TTC Console Class
 
@@ -414,3 +477,11 @@ uint8_t minute(void); ///0-59
 
 ```
 
+## Error codes
+```cpp
+ERR_FAILED_CONN -1      //Connection failed to the server
+ERR_FAILED_CONN_10x -10 //10 times consistent failure. Probably no internet connection.
+ERR_NO_NODE_TOKEN -2    //NT isn't identified, call Console.Identify(&TCPclient, mac_address); for a new NT.
+ERR_ACK_FAILED -3       //usually due to wrong account security details. UDP Console.log() might still work because that's not encrypted.
+ERR_DATA_PARSE -4       //usually due to wrong TTC or JSON syntax, try removing quotations.
+```
