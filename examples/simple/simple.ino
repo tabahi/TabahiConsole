@@ -1,15 +1,16 @@
-
+//Last update: 30-05-2023, tested on ESP32
 #include <TabahiConsole.h>
 
-const char* ssid     = "WiFi Name";
-const char* password = "WiFi Pass";
+const char* ssid     = "WiFi_Name";//e.g., "WiFi_Name";
+const char* password = "WiFi_Pass";//e.g., "WiFi_Pass";
 
+//Go to https://console.tabahi.tech/#account for the following settings:
 #define TTC_server "api.tabahi.tech" //api.tabahi.tech
-#define USER_TOKEN "6225868df6412032c74a3698"
-#define USER_SECRET "Deu9DqvSS6pbNuIoI43aCh"
+#define USER_TOKEN "6225868df6412032c74a3698" //e.g., 6225868df6412032c74a3698
+#define USER_SECRET "Deu9DqvSS6pbNuIoI43aCh"  //e.g., Deu9DqvSS6pbNuIoI43aCh
 #define DEBUG_TTC 1 //set to 1 to print verbose info on Serial
 
-TTC Console(TTC_server, 2096, 44561, USER_TOKEN, USER_SECRET, DEBUG_TTC);
+TTC Console(TTC_server, 2096, 44561, USER_TOKEN, USER_SECRET, DEBUG_TTC); //cloud server address, TCP channel port, UDP channel port, USER_TOKEN, USER_SECRET, enable_debug
 
 String mac_address = ""; //will set in setup. Used for node identification.
 int increment = 0; //dummy variable
@@ -85,7 +86,7 @@ void loop()
 
 int sync_variables()
 {
-  WiFiClient TCPclient;
+  WiFiClient TCPclient; //define a TCP clinet to be used by Console
   int n_vars = Console.runSync(&TCPclient);
 
   if (n_vars >= 0) //check if variables sync was ok

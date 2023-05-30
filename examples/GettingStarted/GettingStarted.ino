@@ -1,22 +1,28 @@
-
+//Last update: 30-05-2023, tested on ESP32
 #include <ESPWifiConfig.h>
 #include <TabahiConsole.h>
 
-const char* ssid     = "WiFi Name";
-const char* password = "WiFi Pass";
+const char* ssid     = "WiFi Name";//"WiFi Name";
+const char* password = "WiFi Pass";//"WiFi Pass";
 
+//Go to https://console.tabahi.tech/#account for the following settings:
 #define TTC_server "api.tabahi.tech" //api.tabahi.tech
-#define USER_TOKEN "6223338df64144aac74a3622" //copy from account
+#define USER_TOKEN "6225868df6412032c74a3698" //copy from account
 #define USER_SECRET "Deu9DqvSS6pbNuIoI43aCh" //copy from account
 
 #define DEBUG_TTC 1 //set to 1 to print verbose info on Serial
 
-TTC Console(TTC_server, 2096, 44561, USER_TOKEN, USER_SECRET, DEBUG_TTC);
+TTC Console(TTC_server, 2096, 44561, USER_TOKEN, USER_SECRET, DEBUG_TTC); //cloud server address, TCP channel port, UDP channel port, USER_TOKEN, USER_SECRET, enable_debug
 
 String mac_address = ""; //will set in setup. Used for node identification.
 unsigned long heartbeat = 10000;
 
-String node_token = ""; //hold the node_token string character
+
+//example geo-coordinates
+float geo_lat = 50.9081;
+float geo_lon = -0.1256;
+int increment = 1; //an example variable
+
 
 void setup()
 {
@@ -40,9 +46,6 @@ void setup()
 }
 
 
-float geo_lat = 50.9081;
-float geo_lon = -0.1256;
-int increment = 1;
 
 void loop()
 {
@@ -51,7 +54,8 @@ void loop()
 
     WiFiClient TCPclient;
 
-    if (Console.node_token_valid == false) //Need to get a Node Token before anything else
+    //Need to get a Node Token before anything else
+    if (Console.node_token_valid == false) 
     {
       int idn_status = Console.Identify(&TCPclient, mac_address);  //Identify Node Token using mac address
       if (idn_status == 1)
@@ -64,50 +68,14 @@ void loop()
         Serial.printf("IDN failed %d\n", idn_status);
       }
     }
-
+    //already have a valid Node Token
     else
     {
-      checkSunrise();
-      checkWeatherForecast(3);
+      //sync variables
       int n_vars = Console.runSync(&TCPclient);
-      //
-
+      
       if (n_vars >= 0) //check if variables sync was ok
       {
-        Serial.printf("Inbox: %d \n", Console.inbox);
-
-        //>12,624e767c7a9f1e8c3b8647ec,Hello hi
-        //>seconds_ago,sender_node_token,Msg_content
-
-        while (Console.inbox > 0)
-        {
-          String readMsg = Console.readMessage(&TCPclient, 't');
-          if (readMsg[0] == '>')
-          {
-            int comma_index = readMsg.indexOf(',');
-            unsigned long seconds_ago = atol(readMsg.substring(1, comma_index).c_str());
-            readMsg = readMsg.substring(comma_index + 1); comma_index = readMsg.indexOf(',');
-            String sender_NT = readMsg.substring(0, comma_index);
-            String message = readMsg.substring(comma_index + 1);
-
-            Serial.print("Recieved: "); Serial.print(seconds_ago); Serial.print(" seconds ago, from "); Serial.println(sender_NT);
-            Serial.print("Msg:"); Serial.println(message);
-          }
-          else
-          {
-            Serial.print("Error:"); Serial.println(readMsg);
-          }
-          Console.inbox--;
-        }
-
-        //Send message to self (@mac_address, use Node Token Console.NT or identifier)
-        int sendMsgStatus = Console.sendMessage(&TCPclient, mac_address, "yo, sup");
-        Serial.print("Msg sent:\t"); Serial.println(sendMsgStatus);
-
-        if (Console.isValidType("heartbeat", 'u')) //check if a valid long 'heartbeat' is synced
-          heartbeat = Console.get_ulong("heartbeat");  //load the latest value recieved from server
-        else Serial.println("No 'u' var for heartbeat");
-
 
         Console.printVariables();
         heartbeat = 10000;
@@ -121,8 +89,25 @@ void loop()
         if (Console.isValid("example")) //check if a valid long 'test_var' is synced
         {
           Serial.print("example=");
-          Serial.println(Console.get_bool("example"));
+          Serial.println(Console.get_bool("example")); //read the console variable
         }
+
+        
+        if (Console.isValidType("heartbeat", 'u')) //check if a valid long 'heartbeat' is synced
+          heartbeat = Console.get_ulong("heartbeat");  //load the latest value recieved from server
+        else Serial.println("No 'u' var for heartbeat");
+
+
+
+        //Console.runSync also checks if there are any messages in the inbox
+        Serial.printf("Inbox: %d \n", Console.inbox);
+        
+        if(Console.inbox>0) //if there are some unread messages
+        {
+           read_inbox(); //see below
+        }
+        send_a_test_message(); //see below
+        
 
       }
       else
@@ -138,6 +123,9 @@ void loop()
 
       delay(1); yield();  //a minor delay for wifi stability
 
+
+
+      //Sending data to cloud
       //create a data row:
       Console.newDataRow(); //new row with a current timestamp
       Console.push_ulong("a",  123);
@@ -158,6 +146,13 @@ void loop()
       //Don't make rows too big to handle for memory
       //No need to CommitData after SendJSON
 
+      
+      checkSunrise();         //get and print sun timings
+      checkWeatherForecast(3); //get and print forecast for the next 3 hours
+      
+
+
+      //Sending console logs to Monitor
       Console.log(F("Heap:")); Console.logln((long) ESP.getFreeHeap()); //check heap health
 
       Console.CommitLogs(mac_address.c_str());//send all the monitor logs to server, using mac address as the identifier
@@ -185,6 +180,52 @@ void loop()
 
 
 
+void read_inbox()
+{
+  WiFiClient TCPclient;
+  //reading messages in inbox
+  while (Console.inbox > 0)
+  {
+    
+  //message format:
+  //>12,624e767c7a9f1e8c3b8647ec,Hello hi
+  //>seconds_ago,sender_node_token,Msg_content
+
+    String readMsg = Console.readMessage(&TCPclient, 't');
+    if (readMsg[0] == '>')
+    {
+      int comma_index = readMsg.indexOf(',');
+      unsigned long seconds_ago = atol(readMsg.substring(1, comma_index).c_str());
+      readMsg = readMsg.substring(comma_index + 1); comma_index = readMsg.indexOf(',');
+      String sender_NT = readMsg.substring(0, comma_index);
+      String message = readMsg.substring(comma_index + 1);
+
+      Serial.print("Recieved: "); Serial.print(seconds_ago); Serial.print(" seconds ago, from "); Serial.println(sender_NT);
+      Serial.print("Msg:"); Serial.println(message);
+    }
+    else
+    {
+      Serial.print("Error:"); Serial.println(readMsg);
+    }
+    Console.inbox--;
+  }
+}
+
+
+
+void send_a_test_message()
+{
+  
+  //Send message to self (@mac_address, use Node Token Console.NT or identifier)
+
+  WiFiClient TCPclient;
+  int sendMsgStatus = Console.sendMessage(&TCPclient, mac_address, "yo, sup");
+  Serial.print("Msg sent:\t"); Serial.println(sendMsgStatus);
+}
+
+
+
+
 void checkSunrise()
 {
   String geo_lat = "51.500";
@@ -205,6 +246,8 @@ void checkSunrise()
   Serial.print("\tMoon phase: ");
   Serial.println(Console.moon_phase);
 }
+
+
 
 
 void checkWeatherForecast(int forecast_hours)
@@ -240,3 +283,4 @@ void checkWeatherForecast(int forecast_hours)
 
 #endif
 }
+

@@ -6,7 +6,7 @@
  * then a safe mode is used in which the code does nothing else 
  * but connects to wifi and tries to update to a newer verions if available 
  */
-#include <ESPWifiConfig.h>
+ 
 #include <TabahiConsole.h>
 #define EE_SIZE 4096
 #define SAFE_RUN_MIN_TIME 3600000 //1 hour
