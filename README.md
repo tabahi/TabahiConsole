@@ -1,6 +1,6 @@
 # Tabahi Console
 
-![Version](https://img.shields.io/static/v1?label=v&message=1.2&color=success)
+![Version](https://img.shields.io/static/v1?label=v&message=1.4&color=success)
 ![Device](https://img.shields.io/static/v1?label=Device&message=ESP32&color=blueviolet)
 ![Device](https://img.shields.io/static/v1?label=Device&message=ESP8266&color=blueviolet)
 ![Device](https://img.shields.io/static/v1?label=Device&message=Arduino&color=blueviolet)
