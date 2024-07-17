@@ -7,8 +7,20 @@
 ![Language](https://img.shields.io/github/languages/top/tabahi/TabahiConsole)
 
 
-An arduino Library for ESP32 and ESP8266 cloud IoT interface. Easily control and manage your devices using the web console at:
+Remotely control, view, interconnect and update your ESP32 and ESP8266. An arduino Library for ESP32 and ESP8266 cloud IoT interface. 
 [https://tabahi.tech](https://tabahi.tech/)
+
+
+- OTA over the internet from [console.tabahi.tech](https://console.tabahi.tech/).
+- Change or view synchronized variables from the web.
+- Push data to cloud and view it nicely on the [console.tabahi.tech](https://console.tabahi.tech/).
+- Uses simple yet secure TCP channel. Doesn't use HTTPS to save resources.
+- An independent UDP monitor to emulate Serial Monitor remotely.
+- Get notified on telegram on variables changes.
+- Connect different devices with each other over the internet using messages.
+- Run scripts (JS) on the cloud to avoid burduning the microcontroller.
+- Currently the trail is limited to 10000 writes. Email me at tabahi@duck.com to increase the limit (for free).
+- Scalable and customizable cloud source on license.
 
 
 ## Initializing
