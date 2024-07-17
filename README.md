@@ -289,37 +289,6 @@ void checkWeatherForecast()
 
 The forecast data for `WEATHER_HOURS_MAX` hours is held in the memory for later use, so that the device doesn't have to check the forecast again and again. The decrease or increase the number of forecast hours, edit the first line of `SettingsTTC.h`.
 
-## Sunrise and Sunset
-
-Some daylight dependent applications require the sunrise and sunset timings. Met.no API provides these timings in local time. The elevation of the sun at noon is also provided for solar tracking applications.
-
-
-```cpp
-
-
-void checkSunrise()
-{
-  String geo_lat = "51.500";
-  String geo_lon = "-0.1475";
-
-  WiFiClient TCPclient;
-  uint8_t days_status = Console.fetchSunrise(&TCPclient, geo_lat, geo_lon);
-  Console.log(F("days_status:\t")); Console.logln(days_status); //0 for failed, 1 for success
-
-  Serial.print("Sunrise: ");
-  Serial.print(Console.sunrise_hour); Serial.print(':'); Serial.print(Console.sunrise_minutes);
-  Serial.print("\tNoon: ");
-  Serial.print(Console.noon_hour); Serial.print(':'); Serial.print(Console.noon_minutes);
-  Serial.print("\tSunset: ");
-  Serial.print(Console.sunset_hour); Serial.print(':'); Serial.print(Console.sunset_minutes);
-  Serial.print("\tNoon Elevation: ");
-  Serial.print(Console.noon_angle);
-  Serial.print("\tMoon phase: ");
-  Serial.println(Console.moon_phase);
-}
-
-```
-
 
 ## OTA Update
 
