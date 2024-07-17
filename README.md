@@ -11,7 +11,7 @@ Remotely control, view, interconnect and update your ESP32 and ESP8266. An ardui
 [https://tabahi.tech](https://tabahi.tech/)
 
 
-- OTA over the internet from [console.tabahi.tech](https://console.tabahi.tech/).
+- OTA update compiled binary over the internet from [console.tabahi.tech](https://console.tabahi.tech/).
 - Change or view synchronized variables from the web.
 - Push data to cloud and view it nicely on the [console.tabahi.tech](https://console.tabahi.tech/).
 - Uses simple yet secure TCP channel. Doesn't use HTTPS to save resources.
