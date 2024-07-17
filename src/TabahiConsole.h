@@ -129,6 +129,7 @@ public:
 	String get(char *key_name);
 	bool set_String(char *key_name, String *val);
 	bool set_String(char *key_name, String val);
+	bool set_String(char *key_name, char* val);
 	bool set_geo(char *key_name, String val_lat, String val_lon);
 	String get_geo_lat(char *key_name);
 	String get_geo_lon(char *key_name);
@@ -201,16 +202,16 @@ public:
 	String getHeaderValue(String header, String headerName);
 	#endif
 	
-	int fetchSunrise(TCPClientObj *TCPclient, String geo_lat, String geo_lon);
+	//int fetchSunrise(TCPClientObj *TCPclient, String geo_lat, String geo_lon);
 
-	uint8_t sunrise_hour = 255;	//sunrise hour
-	uint8_t sunrise_minutes = 255;	//sunrise minutes
-	uint8_t noon_hour = 255;	//noon
-	uint8_t noon_minutes = 255;
-	uint8_t sunset_hour = 255;	//sunset
-	uint8_t sunset_minutes = 0;
-	float noon_angle = -1;
-	float moon_phase = -1;
+	//uint8_t sunrise_hour = 255;	//sunrise hour
+	//uint8_t sunrise_minutes = 255;	//sunrise minutes
+	//uint8_t noon_hour = 255;	//noon
+	//uint8_t noon_minutes = 255;
+	//uint8_t sunset_hour = 255;	//sunset
+	//uint8_t sunset_minutes = 0;
+	//float noon_angle = -1;
+	//float moon_phase = -1;
 
 #if defined(WEATHER_HOURS_MAX) && (WEATHER_HOURS_MAX > 0)
 	void weather_init(void);
@@ -307,7 +308,7 @@ private:
 
 	
 	
-	void parse_sunrise(char c);
+	//void parse_sunrise(char c);
 
 	uint8_t w_flag = 0;
 	uint8_t w_count = 0;

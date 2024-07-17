@@ -7,7 +7,7 @@
    Login: admin, pass_ESP
    Set Wifi SSID and password
    Wait for the restart
-   Get ESP8266webadmin library from: https://github.com/tabahi/ESP-Wifi-Config
+   Get ESPWifiConfig library from: https://github.com/tabahi/ESP-Wifi-Config
 
    Then check the logs in the web console
 
@@ -20,12 +20,12 @@
 #define ESP_config_reset_pin 0	//GPIO0, D3 on NodeMCU
 #define debug_mode 1  //ESPWifiConfig will print information to Serial in debug mode
 #define overwrite_fallback false //true: overwrite this fallback wifi as primary wifi in memory. false: use this wifi as a fallback wifi when the configured wifi is not available
-ESPWifiConfig ESPConfig("myESP", 80, ESP_config_reset_pin, overwrite_fallback, "lalala", "lalala420", debug_mode);
+ESPWifiConfig ESPConfig("myESP", 8080, ESP_config_reset_pin, overwrite_fallback, "SSE Broadband D1CC3D", "7JnaAdaGNFsErnxY", debug_mode);
 
 
 #define TTC_server "api.tabahi.tech" //api.tabahi.tech
-#define USER_TOKEN "6223338df64144aac74a3622" //copy from account
-#define USER_SECRET "Deu9DqvSS6pbNuIoI43aCh" //copy from account
+#define USER_TOKEN "63d39765c847b65dfc6ba0d5" //copy from account
+#define USER_SECRET "fGaJvgelZ/9I+axo76q37q" //copy from account
 
 #define DEBUG_TTC 1 //set to 1 to print verbose info on Serial
 
@@ -35,14 +35,17 @@ TTC Console(TTC_server, 2096, 44561, USER_TOKEN, USER_SECRET, DEBUG_TTC);
 String mac_address = ""; //will set in setup. Used for node identification.
 unsigned long heartbeat = 10000;
 
-String node_token = ""; //hold the node_token string character
+String node_token = ""; //node_token is how console keeps track of each node. Skip the identification part by setting the 24 char node_token here (see console.tabahi.tech > select a unit or create new > Config)
 
 unsigned long conn_timer = 0;   //connection timer
 
-
+const int led_pin = 33;       //AI thinker ESP cam has a red led on pin 33
+const int flashlight_pin = 4; //AI thinker ESP cam has flashlight on pin 4
 
 void setup()
 {
+  pinMode(led_pin, OUTPUT);
+  pinMode(flashlight_pin, OUTPUT);
   delay(100);
   Serial.begin(115200);
   delay(500);
@@ -52,6 +55,9 @@ void setup()
   mac_address = WiFi.macAddress();
   Serial.print(F("\nMAC: "));
   Serial.println(mac_address);
+  // if mac_address shows as 00:00:00:00:00:00 then you can set a custom variant by:
+  // mac_address = "22:11:33:55:44";
+  // mac_address is used at the identifier for each unit
 
   Console.initialize();
 
@@ -86,7 +92,7 @@ void loop()
       //Get a Node Token from the cloud server before anything else
       if (Console.node_token_valid == false) 
       {
-         //Identify Node Token using mac address
+         //Identify Node Token (or create a new one)  using mac address
         WiFiClient TCPclient;
         int idn_status = Console.Identify(&TCPclient, mac_address); 
         if (idn_status == 1)
@@ -116,7 +122,6 @@ void loop()
       }
       
       conn_timer = millis_now;
-
     }
   }
   else
@@ -154,6 +159,20 @@ int sync_variables()
   if (Console.isValidType("example", 'b'))
     bool example = Console.get_bool("example");
 
+  if (!Console.isValidType("led", 'b'))
+  {
+    Console.set_bool("led", 0); //create a new variable on the console if it doesn't exist
+    Console.set_bool("flashlight", 0);
+  }
+  else
+  {
+    bool led_status = Console.get_bool("led");
+    digitalWrite(led_pin, led_status); 
+    
+    bool flashlight_status = Console.get_bool("flashlight");
+    digitalWrite(flashlight_pin, flashlight_status);
+  }
+  
   //setting a variable to a new value
   increment_example_var++;
   Console.set_int("increment", increment_example_var); //this new value will show on the console after the next sync cycle

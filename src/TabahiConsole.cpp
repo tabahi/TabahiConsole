@@ -423,7 +423,7 @@ bool TTC::set(char *key_name, String *val)
 
 bool TTC::set(char *key_name, String val)
 {
-  return set_String(key_name, val);
+  return set_String(key_name, &val);
 }
 
 bool TTC::set(char *key_name, bool val)
@@ -449,6 +449,17 @@ bool TTC::set(char *key_name, unsigned long val)
 bool TTC::set(char *key_name, float val)
 {
   return set_float(key_name, val);
+}
+
+bool TTC::set_String(char *key_name, char *val)
+{
+  String vals = String(val);
+  return set_String(key_name, &vals);
+}
+
+bool TTC::set_String(char *key_name, String val)
+{
+  return set_String(key_name, &val);
 }
 
 bool TTC::set_String(char *key_name, String *val)
@@ -3210,6 +3221,7 @@ bool TTC::executeOTAupdate(String bin_link)
 //weather forecast functions:
 
 
+/*
 int TTC::fetchSunrise(TCPClientObj *TCPclient, String geo_lat, String geo_lon)
 {
   if (!node_token_valid)
@@ -3321,6 +3333,8 @@ int TTC::fetchSunrise(TCPClientObj *TCPclient, String geo_lat, String geo_lon)
 
   return ERR_FAILED_CONN;
 }
+*/
+
 
 void TTC::weather_parsing_reset(void) //reset weather parser
 {
@@ -3331,7 +3345,7 @@ void TTC::weather_parsing_reset(void) //reset weather parser
 
 
 
-
+/*
 void TTC::parse_sunrise(char c)
 {
   if (w_flag == 0)
@@ -3399,12 +3413,9 @@ void TTC::parse_sunrise(char c)
       w_accum += c;
   }
 
-  /*
-    {[0,6,26,12,10,17,56,34.497128794,23.69387964]}
-//day,sr_h,sr_m,sn_h,sn_m,ss_h,ss_m,se,mp
-  */
 }
 
+*/
 
 #if defined(WEATHER_HOURS_MAX) && (WEATHER_HOURS_MAX > 0)
 
