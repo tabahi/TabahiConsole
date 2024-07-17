@@ -20,7 +20,7 @@
 #define ESP_config_reset_pin 0	//GPIO0, D3 on NodeMCU
 #define debug_mode 1  //ESPWifiConfig will print information to Serial in debug mode
 #define overwrite_fallback false //true: overwrite this fallback wifi as primary wifi in memory. false: use this wifi as a fallback wifi when the configured wifi is not available
-ESPWifiConfig ESPConfig("myESP", 8080, ESP_config_reset_pin, overwrite_fallback, "SSE Broadband D1CC3D", "7JnaAdaGNFsErnxY", debug_mode);
+ESPWifiConfig ESPConfig("myESP", 8080, ESP_config_reset_pin, overwrite_fallback, "Wifi SSID", "Wifi pass", debug_mode);
 
 
 #define TTC_server "api.tabahi.tech" //api.tabahi.tech
