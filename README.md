@@ -23,9 +23,7 @@ Remotely control, view, interconnect and update your ESP32 and ESP8266. An ardui
 - Scalable and customizable cloud source on license.
 
 
-
 ## Initializing
-
 
 Start by initializing the class
 
