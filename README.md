@@ -18,9 +18,10 @@ Remotely control, view, interconnect and update your ESP32 and ESP8266. An ardui
 - An independent UDP monitor to emulate Serial Monitor remotely.
 - Get notified on telegram on variables changes.
 - Connect different devices with each other over the internet using messages.
-- Run scripts (JS) on the cloud to avoid burduning the microcontroller.
-- Currently the trail is limited to 10000 writes. Email me at tabahi@duck.com to increase the limit (for free).
+- Run scripts (JS) on the cloud to avoid burdening the microcontroller.
+- Currently the trial is limited to 10000 writes. Email me at tabahi@duck.com to increase the limit (for free).
 - Scalable and customizable cloud source on license.
+
 
 
 ## Initializing
