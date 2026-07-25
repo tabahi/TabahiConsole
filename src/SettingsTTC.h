@@ -24,3 +24,4 @@
 #define TCPClientObj WiFiClient //can change to other clients if available
 #define UCPClientObj WiFiUDP
 
+#define TTC_SERVER_HTTP_PORT 2080 // only used for downloading updates

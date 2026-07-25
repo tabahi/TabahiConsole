@@ -2883,7 +2883,7 @@ String TTC::fetchUpdateURL(TCPClientObj *TCPclient, const char *TTC_update_serve
   log(F("[upd_url] Connecting\t"));
 #endif
 
-  if (!TCPclient->connect(TTC_update_server, 80))
+  if (!TCPclient->connect(TTC_update_server, TTC_SERVER_HTTP_PORT))
   {
 #if TTC_INTERNAL_LOGS
     logln(F("Failed"));
@@ -3032,7 +3032,7 @@ bool TTC::executeOTAupdate(String bin_link)
   long bin_contentLength = 0;
   bool bin_isValidContentType = false;
 
-  if (TCPclient.connect(bin_host.c_str(), 80))
+  if (TCPclient.connect(bin_host.c_str(), TTC_SERVER_HTTP_PORT))
   {
 
     Serial.println("[UPD] Fetching Bin: " + bin_path);
