@@ -1,6 +1,6 @@
 
 
-#define WEATHER_HOURS_MAX 24 //Set to 0 to disable weather forecast. Set number of hours for which to fetch weather forecast
+#define WEATHER_HOURS_MAX 0 //Set to 0 to disable weather forecast. Set number of hours for which to fetch weather forecast
 #define ENABLE_OTA_UPDATE 1 //set to 0 to disable function executeOTAupdate()....  fetchUpdateURL() is always included
 
 #define TTC_INTERNAL_LOGS 1 //Set to 0 to disable logs from the internal functions of this library, Set to 1 to see debugging info
@@ -24,4 +24,3 @@
 #define TCPClientObj WiFiClient //can change to other clients if available
 #define UCPClientObj WiFiUDP
 
-#define TTC_SERVER_HTTP_PORT 2080 // only used for downloading updates

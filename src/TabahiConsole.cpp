@@ -1,25 +1,29 @@
 
 #include "TabahiConsole.h"
 
-TTC::TTC(const char *TTC_server, int TT_TCP_portx, int TT_UDP_portx, const char *USER_TOK, const char *USER_SEC, bool en_print_logs)
+TTC::TTC(const char *TTC_server, int TT_TCP_portx, int TT_UDP_portx, int TT_HTTP_portx, const char *USER_TOK, const char *USER_SEC, bool en_print_logs)
 {
   _TTC_server = TTC_server;
   if (TT_TCP_portx > 0)
     TT_TCP_port = TT_TCP_portx;
   if (TT_UDP_portx > 0)
     TT_UDP_port = TT_UDP_portx;
+  if (TT_HTTP_portx > 0)
+    TT_HTTP_port = TT_HTTP_portx;
   _USER_TOK = USER_TOK;
   _USER_SEC = USER_SEC;
   _print_logs = en_print_logs;
 };
 
-void TTC::initialize(const char *TTC_server, int TT_TCP_portx, int TT_UDP_portx, const char *USER_TOK, const char *USER_SEC, bool en_print_logs)
+void TTC::initialize(const char *TTC_server, int TT_TCP_portx, int TT_UDP_portx, int TT_HTTP_portx, const char *USER_TOK, const char *USER_SEC, bool en_print_logs)
 {
   _TTC_server = TTC_server;
   if (TT_TCP_portx > 0)
     TT_TCP_port = TT_TCP_portx;
   if (TT_UDP_portx > 0)
     TT_UDP_port = TT_UDP_portx;
+  if (TT_HTTP_portx > 0)
+    TT_HTTP_port = TT_HTTP_portx; 
   _USER_TOK = USER_TOK;
   _USER_SEC = USER_SEC;
   initialize();
@@ -2883,7 +2887,7 @@ String TTC::fetchUpdateURL(TCPClientObj *TCPclient, const char *TTC_update_serve
   log(F("[upd_url] Connecting\t"));
 #endif
 
-  if (!TCPclient->connect(TTC_update_server, TTC_SERVER_HTTP_PORT))
+  if (!TCPclient->connect(TTC_update_server, TT_HTTP_port))
   {
 #if TTC_INTERNAL_LOGS
     logln(F("Failed"));
@@ -3032,7 +3036,7 @@ bool TTC::executeOTAupdate(String bin_link)
   long bin_contentLength = 0;
   bool bin_isValidContentType = false;
 
-  if (TCPclient.connect(bin_host.c_str(), TTC_SERVER_HTTP_PORT))
+  if (TCPclient.connect(bin_host.c_str(), TT_HTTP_port))
   {
 
     Serial.println("[UPD] Fetching Bin: " + bin_path);

@@ -89,11 +89,12 @@ class TTC
 	const char *_TTC_server;
 	int TT_TCP_port = 2096;
 	int TT_UDP_port = 44561;
+	int TT_HTTP_port = 2080;
 	const char *_USER_TOK;
 	const char *_USER_SEC;
 
 public:
-	TTC(const char *TTC_server, int TT_TCP_portx, int TT_UDP_portx, const char *USER_TOK, const char *USER_SEC, const bool en_print_logs);
+	TTC(const char *TTC_server, int TT_TCP_portx, int TT_UDP_portx, int TT_HTTP_portx, const char *USER_TOK, const char *USER_SEC, const bool en_print_logs);
 	bool _print_logs = false;
 	bool node_token_valid = false;
 	char NT[TOKEN_LENGTH] = "00000000000000000000000";
@@ -108,7 +109,7 @@ public:
 
 
 	void initialize(void);
-	void initialize(const char *TTC_server, int TT_TCP_portx, int TT_UDP_portx, const char *USER_TOK, const char *USER_SEC, bool en_print_logs);
+	void initialize(const char *TTC_server, int TT_TCP_portx, int TT_UDP_portx, int TT_HTTP_portx, const char *USER_TOK, const char *USER_SEC, bool en_print_logs);
 	bool set_NODE_TOKEN(char *new_NT);
 	String jsonify_var(uint8_t);
 	byte *get_hex(char *key_name);
